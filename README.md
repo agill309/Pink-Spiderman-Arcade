@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pink Spider Arcade</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #ffc0cb, #fff0f5);
+      color: #333;
+    }
+    header {
+      background: #e91e63;
+      color: white;
+      text-align: center;
+      padding: 2rem;
+    }
+    section {
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+      color: #c2185b;
+    }
+    canvas {
+      display: block;
+      margin: 1rem auto;
+      background: white;
+      border: 4px dashed #f06292;
+    }
+    button {
+      display: block;
+      margin: 1rem auto;
+      padding: 0.5rem 1rem;
+      background: #e91e63;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.9rem;
+      padding: 2rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🕷️ Pink Spider Arcade</h1>
+    <p>I’m Ash. I’m 13. I like Nando’s. I made this site for fun. Play the games.</p>
+  </header>
+
+  <section>
+    <h2>Flappy Spidergirl</h2>
+    <canvas id="flappy" width="360" height="480"></canvas>
+    <button onclick="startFlappy()">Restart Game</button>
+    <script>
+      let fCanvas = document.getElementById("flappy");
+      let fCtx = fCanvas.getContext("2d");
+      let fy, fVelocity, fGravity, fFlap, fPipes, fScore, fGameOver;
+
+      function startFlappy() {
+        fy = 150;
+        fVelocity = 0;
+        fGravity = 0.5;
+        fFlap = -8;
+        fPipes = [];
+        fScore = 0;
+        fGameOver = false;
+        requestAnimationFrame(flappyLoop);
+      }
+
+      function drawSpidergirl() {
+        fCtx.beginPath();
+        fCtx.arc(60, fy, 15, 0, Math.PI * 2);
+        fCtx.fillStyle = "#880e4f";
+        fCtx.fill();
+        fCtx.stroke();
+        fCtx.fillStyle = "#fff";
+        fCtx.fillText("🕷️", 53, fy + 5);
+      }
+
+      function drawPipes() {
+        fPipes.forEach(p => {
+          fCtx.fillStyle = "#f48fb1";
+          fCtx.fillRect(p.x, 0, p.w, p.t);
+          fCtx.fillRect(p.x, p.t + p.gap, p.w, 500);
+        });
+      }
+
+      function newPipe() {
+        let top = Math.random() * 200 + 50;
+        fPipes.push({ x: 360, w: 50, t: top, gap: 120 });
+      }
+
+      function collision(p) {
+        return (60 + 15 > p.x && 60 - 15 < p.x + p.w &&
+               (fy - 15 < p.t || fy + 15 > p.t + p.gap));
+      }
+
+      function flappyLoop() {
+        if (fGameOver) return;
+        fCtx.clearRect(0, 0, 360, 480);
+        fVelocity += fGravity;
+        fy += fVelocity;
+        if (fy > 480 || fy < 0) fGameOver = true;
+
+        if (fPipes.length === 0 || fPipes[fPipes.length - 1].x < 210) newPipe();
+        fPipes.forEach(p => {
+          p.x -= 2;
+          if (p.x + p.w < 0) {
+            fPipes.shift();
+            fScore++;
+          }
+          if (collision(p)) fGameOver = true;
+        });
+
+        drawPipes();
+        drawSpidergirl();
+
+        fCtx.fillStyle = "#880e4f";
+        fCtx.font = "20px Comic Sans MS";
+        fCtx.fillText("Score: " + fScore, 10, 25);
+
+        if (!fGameOver) requestAnimationFrame(flappyLoop);
+        else fCtx.fillText("💥 Game Over!", 100, 240);
+      }
+
+      fCanvas.addEventListener("mousedown", () => fVelocity = fFlap);
+      document.addEventListener("keydown", () => fVelocity = fFlap);
+      startFlappy();
+    </script>
+  </section>  <section>
+    <h2>Glitter Maze</h2>
+    <canvas id="maze" width="350" height="350"></canvas>
+    <script>
+      const mCanvas = document.getElementById("maze");
+      const mCtx = mCanvas.getContext("2d");
+      const mazeMap = [
+        "#######",
+        "#     #",
+        "# ### #",
+        "# #   #",
+        "# # # #",
+        "#   #E#",
+        "#######"
+      ];
+      let mx = 1, my = 1;
+
+      function drawMaze() {
+        for (let y = 0; y < 7; y++) {
+          for (let x = 0; x < 7; x++) {
+            mCtx.fillStyle = mazeMap[y][x] === "#" ? "#f8bbd0" : "#fff";
+            mCtx.fillRect(x * 50, y * 50, 50, 50);
+          }
+        }
+        mCtx.fillStyle = "#6a1b9a";
+        mCtx.beginPath();
+        mCtx.arc(mx * 50 + 25, my * 50 + 25, 15, 0, Math.PI * 2);
+        mCtx.fill();
+        mCtx.fillStyle = "#fff";
+        mCtx.fillText("🕷️", mx * 50 + 17, my * 50 + 30);
+      }
+
+      function moveMaze(e) {
+        let dx = 0, dy = 0;
+        if (e.key === "ArrowUp") dy = -1;
+        if (e.key === "ArrowDown") dy = 1;
+        if (e.key === "ArrowLeft") dx = -1;
+        if (e.key === "ArrowRight") dx = 1;
+        if (mazeMap[my + dy][mx + dx] !== "#") {
+          mx += dx; my += dy;
+          if (mazeMap[my][mx] === "E") alert("🎉 You escaped the glitter maze!");
+        }
+        drawMaze();
+      }
+
+      drawMaze();
+      addEventListener("keydown", moveMaze);
+    </script>
+  </section>
+
+  <section>
+    <h2>Spider Drift</h2>
+    <canvas id="drift" width="400" height="400"></canvas>
+    <script>
+      const dCanvas = document.getElementById("drift");
+      const dCtx = dCanvas.getContext("2d");
+      let car = { x: 180, y: 300, dx: 0 };
+      let keys = {}, orbs = [];
+      for (let i = 0; i < 5; i++) orbs.push({ x: Math.random() * 360, y: Math.random() * -400 });
+
+      function drawDrift() {
+        dCtx.fillStyle = "#fff0f5";
+        dCtx.fillRect(0, 0, 400, 400);
+        dCtx.fillStyle = "#ff4081";
+        dCtx.fillRect(car.x, car.y, 40, 20);
+        dCtx.fillStyle = "#6a1b9a";
+        orbs.forEach(o => {
+          dCtx.beginPath();
+          dCtx.arc(o.x, o.y, 10, 0, 7);
+          dCtx.fill();
+        });
+      }
+
+      function updateDrift() {
+        car.dx = keys["ArrowLeft"] ? -3 : keys["ArrowRight"] ? 3 : 0;
+        car.x += car.dx;
+        orbs.forEach(o => {
+          o.y += 3;
+          if (o.y > 400) { o.y = -20; o.x = Math.random() * 360; }
+          if (Math.abs(o.x - car.x) < 25 && Math.abs(o.y - car.y) < 20) {
+            alert("🏁 You grabbed an orb!");
+            o.y = -20;
+          }
+        });
+      }
+
+      function loopDrift() {
+        updateDrift();
+        drawDrift();
+        requestAnimationFrame(loopDrift);
+      }
+
+      addEventListener("keydown", e => keys[e.key] = true);
+      addEventListener("keyup", e => keys[e.key] = false);
+      loopDrift();
+    </script>
+  </section>  <section>
+    <h2>Tetris</h2>
+    <canvas id="tetris" width="200" height="400"></canvas>
+    <script>
+      const tCanvas = document.getElementById("tetris");
+      const tCtx = tCanvas.getContext("2d");
+      const grid = Array.from({ length: 20 }, () => Array(10).fill(0));
+      const colors = ["#000", "#e91e63", "#f06292", "#f8bbd0", "#ce93d8"];
+      const shapes = [
+        [[1,1,1],[0,1,0]],
+        [[1,1],[1,1]],
+        [[0,1,1],[1,1,0]],
+        [[1,1,0],[0,1,1]],
+        [[1,1,1,1]]
+      ];
+      let piece = { x: 3, y: 0, shape: shapes[0] };
+
+      function drawTetris() {
+        tCtx.fillStyle = "#fff";
+        tCtx.fillRect(0, 0, 200, 400);
+        for (let y = 0; y < 20; y++) {
+          for (let x = 0; x < 10; x++) {
+            if (grid[y][x]) {
+              tCtx.fillStyle = colors[grid[y][x]];
+              tCtx.fillRect(x * 20, y * 20, 20, 20);
+            }
+          }
+        }
+        piece.shape.forEach((row, dy) => {
+          row.forEach((val, dx) => {
+            if (val) {
+              tCtx.fillStyle = "#e91e63";
+              tCtx.fillRect((piece.x + dx) * 20, (piece.y + dy) * 20, 20, 20);
+            }
+          });
+        });
+      }
+
+      function moveTetris(dx) {
+        piece.x += dx;
+        if (collide()) piece.x -= dx;
+      }
+
+      function dropTetris() {
+        piece.y++;
+        if (collide()) {
+          piece.y--;
+          merge();
+          resetPiece();
+        }
+      }
+
+      function collide() {
+        return piece.shape.some((row, dy) =>
+          row.some((val, dx) =>
+            val && (grid[piece.y + dy]?.[piece.x + dx] || piece.x + dx < 0 || piece.x + dx >= 10 || piece.y + dy >= 20)
+          )
+        );
+      }
+
+      function merge() {
+        piece.shape.forEach((row, dy) => {
+          row.forEach((val, dx) => {
+            if (val) grid[piece.y + dy][piece.x + dx] = 1;
+          });
+        });
+      }
+
+      function resetPiece() {
+        piece = { x: 3, y: 0, shape: shapes[Math.floor(Math.random() * shapes.length)] };
+      }
+
+      function loopTetris() {
+        dropTetris();
+        drawTetris();
+        setTimeout(loopTetris, 500);
+      }
+
+      document.addEventListener("keydown", e => {
+        if (e.key === "ArrowLeft") moveTetris(-1);
+        if (e.key === "ArrowRight") moveTetris(1);
+        if (e.key === "ArrowDown") dropTetris();
+      });
+
+      drawTetris();
+      loopTetris();
+    </script>
+  </section>
+
+  <footer>
+    &copy; 2025 Ash — built with glitter, pixels, and Nando’s.
+  </footer>
+</body>
+</html>  <section>
+    <h2>Miles Morales Quiz</h2>
+    <button onclick="startQuiz()">Start Quiz</button>
+    <form id="quiz" style="display:none; margin-top:1rem;">
+      <p><strong>1.</strong> What color is Miles' Spider-Man suit?</p>
+      <label><input type="radio" name="q1" value="b"> Black and red</label><br>
+      <label><input type="radio" name="q1" value="a"> Red and blue</label><br>
+      <label><input type="radio" name="q1" value="c"> Green and purple</label><br><br>
+
+      <p><strong>2.</strong> Who is the Prowler in Miles’ life?</p>
+      <label><input type="radio" name="q2" value="b"> Uncle Aaron</label><br>
+      <label><input type="radio" name="q2" value="a"> His dad</label><br>
+      <label><input type="radio" name="q2" value="c"> His teacher</label><br><br>
+
+      <p><strong>3.</strong> What gives Miles his powers?</p>
+      <label><input type="radio" name="q3" value="b"> A radioactive spider bite</label><br>
+      <label><input type="radio" name="q3" value="a"> A science experiment</label><br>
+      <label><input type="radio" name="q3" value="c"> A magic crystal</label><br><br>
+
+      <p><strong>4.</strong> What’s Miles’ electric attack called?</p>
+      <label><input type="radio" name="q4" value="b"> Venom Blast</label><br>
+      <label><input type="radio" name="q4" value="a"> Shockwave</label><br>
+      <label><input type="radio" name="q4" value="c"> Web Zap</label><br><br>
+
+      <p><strong>5.</strong> What’s the name of the multiverse movie Miles stars in?</p>
+      <label><input type="radio" name="q5" value="b"> Into the Spider-Verse</label><br>
+      <label><input type="radio" name="q5" value="a"> Across the Web</label><br>
+      <label><input type="radio" name="q5" value="c"> Rise of the Spiders</label><br><br>
+
+      <p><strong>6.</strong> What musical skill does Miles learn from his uncle?</p>
+      <label><input type="radio" name="q6" value="b"> DJing</label><br>
+      <label><input type="radio" name="q6" value="a"> Trumpet</label><br>
+      <label><input type="radio" name="q6" value="c"> Drumming</label><br><br>
+
+      <p><strong>7.</strong> What’s Miles’ best friend’s name?</p>
+      <label><input type="radio" name="q7" value="b"> Ganke</label><br>
+      <label><input type="radio" name="q7" value="a"> Peter</label><br>
+      <label><input type="radio" name="q7" value="c"> Gwen</label><br><br>
+
+      <p><strong>8.</strong> What city does Miles live in?</p>
+      <label><input type="radio" name="q8" value="b"> Brooklyn</label><br>
+      <label><input type="radio" name="q8" value="a"> Queens</label><br>
+      <label><input type="radio" name="q8" value="c"> Chicago</label><br><br>
+
+      <p><strong>9.</strong> What’s Miles’ dad’s job?</p>
+      <label><input type="radio" name="q9" value="b"> Police officer</label><br>
+      <label><input type="radio" name="q9" value="a"> Teacher</label><br>
+      <label><input type="radio" name="q9" value="c"> Chef</label><br><br>
+
+      <p><strong>10.</strong> What universe is Miles from?</p>
+      <label><input type="radio" name="q10" value="b"> Ultimate Universe</label><br>
+      <label><input type="radio" name="q10" value="a"> Classic Universe</label><br>
+      <label><input type="radio" name="q10" value="c"> Spider-Verse Prime</label><br><br>
+
+      <button type="button" onclick="checkQuiz()">Submit Answers</button>
+    </form>
+    <p id="quizResult" style="text-align:center; font-weight:bold; color:#c2185b;"></p>
+
+    <script>
+      function startQuiz() {
+        document.getElementById("quiz").style.display = "block";
+      }
+
+      function checkQuiz() {
+        const answers = {
+          q1: "b", q2: "b", q3: "b", q4: "b", q5: "b",
+          q6: "b", q7: "b", q8: "b", q9: "b", q10: "b"
+        };
+        let score = 0;
+        for (let q in answers) {
+          const selected = document.querySelector(`input[name="${q}"]:checked`);
+          if (selected && selected.value === answers[q]) score++;
+        }
+        const result = document.getElementById("quizResult");
+        if (score === 10) result.textContent = "🕷️ You ARE Miles Morales!";
+        else if (score >= 7) result.textContent = `🕸️ You're a Spider Pro! Score: ${score}/10`;
+        else if (score >= 4) result.textContent = `💥 You're a Prok Spider! Score: ${score}/10`;
+        else result.textContent = `😬 You got ${score}/10. Time to rewatch the Spider-Verse!`;
+      }
+    </script>
+  </section>  <section>
+    <h2>🎮 Game Controls</h2>
+    <button onclick="togglePause()" style="background:#c2185b; color:white; font-size:1rem; padding:0.5rem 1rem; border:none; border-radius:6px; cursor:pointer;">⏸️ Pause / Resume All Games</button>
+    <script>
+      let paused = false;
+
+      function togglePause() {
+        paused = !paused;
+      }
+
+      // Modify Flappy Spidergirl loop
+      function flappyLoop() {
+        if (fGameOver || paused) return;
+        fCtx.clearRect(0, 0, 360, 480);
+        fVelocity += fGravity;
+        fy += fVelocity;
+        if (fy > 480 || fy < 0) fGameOver = true;
+
+        if (fPipes.length === 0 || fPipes[fPipes.length - 1].x < 210) newPipe();
+        fPipes.forEach(p => {
+          p.x -= 2;
+          if (p.x + p.w < 0) {
+            fPipes.shift();
+            fScore++;
+          }
+          if (collision(p)) fGameOver = true;
+        });
+
+        drawPipes();
+        drawSpidergirl();
+
+        fCtx.fillStyle = "#880e4f";
+        fCtx.font = "20px Comic Sans MS";
+        fCtx.fillText("Score: " + fScore, 10, 25);
+
+        if (!fGameOver) requestAnimationFrame(flappyLoop);
+        else fCtx.fillText("💥 Game Over!", 100, 240);
+      }
+
+      // Modify Spider Drift loop
+      function loopDrift() {
+        if (!paused) {
+          updateDrift();
+          drawDrift();
+        }
+        requestAnimationFrame(loopDrift);
+      }
+
+      // Modify Tetris loop
+      function loopTetris() {
+        if (!paused) {
+          dropTetris();
+          drawTetris();
+        }
+        setTimeout(loopTetris, 500);
+      }
+
+      // Replace alert in Spider Drift with non-blocking message
+      function showOrbMessage() {
+        const msg = document.createElement("div");
+        msg.textContent = "🏁 You grabbed an orb!";
+        msg.style.position = "fixed";
+        msg.style.top = "20px";
+        msg.style.left = "50%";
+        msg.style.transform = "translateX(-50%)";
+        msg.style.background = "#f06292";
+        msg.style.color = "white";
+        msg.style.padding = "0.5rem 1rem";
+        msg.style.borderRadius = "6px";
+        msg.style.zIndex = "999";
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 1500);
+      }
+
+      // Update orb collision in Spider Drift
+      function updateDrift() {
+        car.dx = keys["ArrowLeft"] ? -3 : keys["ArrowRight"] ? 3 : 0;
+        car.x += car.dx;
+        orbs.forEach(o => {
+          o.y += 3;
+          if (o.y > 400) { o.y = -20; o.x = Math.random() * 360; }
+          if (Math.abs(o.x - car.x) < 25 && Math.abs(o.y - car.y) < 20) {
+            showOrbMessage();
+            o.y = -20;
+          }
+        });
+      }
+    </script>
+  </section>  <section>
+    <h2>📱 Mobile Fixes & Touch Support</h2>
+    <script>
+      // Resize canvases for mobile
+      function resizeCanvas(id, width, height) {
+        const canvas = document.getElementById(id);
+        if (window.innerWidth < 500) {
+          canvas.width = width * 0.8;
+          canvas.height = height * 0.8;
+        }
+      }
+
+      resizeCanvas("flappy", 360, 480);
+      resizeCanvas("maze", 350, 350);
+      resizeCanvas("drift", 400, 400);
+      resizeCanvas("tetris", 200, 400);
+
+      // Touch support for Flappy
+      document.getElementById("flappy").addEventListener("touchstart", () => {
+        if (!paused) fVelocity = fFlap;
+      });
+
+      // Touch support for Maze
+      let lastTouch = 0;
+      document.getElementById("maze").addEventListener("touchstart", () => {
+        const keys = ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"];
+        const key = keys[lastTouch % 4];
+        moveMaze({ key });
+        lastTouch++;
+      });
+
+      // Touch support for Drift
+      document.getElementById("drift").addEventListener("touchstart", e => {
+        const x = e.touches[0].clientX;
+        const mid = window.innerWidth / 2;
+        keys["ArrowLeft"] = x < mid;
+        keys["ArrowRight"] = x >= mid;
+      });
+      document.getElementById("drift").addEventListener("touchend", () => {
+        keys["ArrowLeft"] = false;
+        keys["ArrowRight"] = false;
+      });
+
+      // Touch support for Tetris
+      document.getElementById("tetris").addEventListener("touchstart", e => {
+        const x = e.touches[0].clientX;
+        const third = window.innerWidth / 3;
+        if (x < third) moveTetris(-1);
+        else if (x > 2 * third) moveTetris(1);
+        else dropTetris();
+      });
+    </script>
+  </section>
+
